@@ -1,0 +1,247 @@
+services:
+  api:
+    build: .
+    image: ead-sql-rag:local
+    restart: unless-stopped
+    env_file: ${APP_ENV_FILE:-.env}
+    environment:
+      APP_DATABASE_URL: postgresql+asyncpg://ead_app:${APP_POSTGRES_PASSWORD}@app-postgres:5432/ead_app
+      LANGGRAPH_DATABASE_URL: postgresql://ead_app:${APP_POSTGRES_PASSWORD}@app-postgres:5432/ead_app?sslmode=disable
+      APP_ENV: production
+      DOCS_ENABLED: "false"
+      AUTO_CREATE_SCHEMA: "false"
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1,api}
+      DB_HOST: mysql
+      DB_USER: ead_ro
+      DB_PASSWORD: ${MYSQL_READONLY_PASSWORD}
+      DB_READONLY_USER: ead_ro
+      DB_READONLY_PASSWORD: ${MYSQL_READONLY_PASSWORD}
+      LANGFUSE_ENABLED: "true"
+      LANGFUSE_PUBLIC_KEY: ${LANGFUSE_INIT_PROJECT_PUBLIC_KEY}
+      LANGFUSE_SECRET_KEY: ${LANGFUSE_INIT_PROJECT_SECRET_KEY}
+      LANGFUSE_BASE_URL: http://langfuse-web:3000
+      LANGFUSE_CAPTURE_CONTENT: "false"
+      LANGFUSE_TRACING_ENVIRONMENT: ${LANGFUSE_TRACING_ENVIRONMENT:-production}
+      LOCAL_BASE_URL: ${LOCAL_BASE_URL:-http://host.docker.internal:11434/v1}
+    command: ["sh", "-c", "alembic upgrade head && uvicorn ead_api.main:app --host 0.0.0.0 --port 8000"]
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - api_artifacts:/app/artifacts
+      - api_cache:/app/.cache
+    depends_on:
+      app-postgres:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+      langfuse-web:
+        condition: service_healthy
+
+  ui:
+    image: ead-sql-rag:local
+    restart: unless-stopped
+    env_file: ${APP_ENV_FILE:-.env}
+    environment:
+      EAD_API_BASE_URL: http://api:8000
+      GRADIO_SERVER_NAME: 0.0.0.0
+      GRADIO_SERVER_PORT: 7860
+      GRADIO_ANALYTICS_ENABLED: "false"
+      GRADIO_DEFAULT_CONCURRENCY_LIMIT: 2
+      GRADIO_MAX_QUEUE_SIZE: 32
+    command: ["python", "-m", "ead_ui.app"]
+    ports:
+      - "127.0.0.1:7860:7860"
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:7860/"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    depends_on:
+      api:
+        condition: service_healthy
+
+  app-postgres:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ead_app
+      POSTGRES_PASSWORD: ${APP_POSTGRES_PASSWORD}
+      POSTGRES_DB: ead_app
+      TZ: UTC
+      PGTZ: UTC
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - app_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ead_app -d ead_app"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    command: ["--sql-mode=NO_ENGINE_SUBSTITUTION", "--max-allowed-packet=256M"]
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ead_db
+      MYSQL_USER: ead_ro
+      MYSQL_PASSWORD: ${MYSQL_READONLY_PASSWORD}
+    ports:
+      - "127.0.0.1:3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./ead_dummy_schema.mysql.sql:/docker-entrypoint-initdb.d/10-schema.sql:ro
+      - ./ead_dummy_data_atomcamp.sql:/docker-entrypoint-initdb.d/20-data.sql:ro
+      - ./deploy/mysql/30-readonly-user.sh:/docker-entrypoint-initdb.d/30-readonly-user.sh:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  langfuse-worker:
+    image: docker.io/langfuse/langfuse-worker:3
+    restart: unless-stopped
+    depends_on: &langfuse-depends
+      langfuse-postgres:
+        condition: service_healthy
+      langfuse-clickhouse:
+        condition: service_healthy
+      langfuse-minio:
+        condition: service_healthy
+      langfuse-redis:
+        condition: service_healthy
+    environment: &langfuse-env
+      NEXTAUTH_URL: http://localhost:3000
+      DATABASE_URL: postgresql://postgres:${LANGFUSE_POSTGRES_PASSWORD}@langfuse-postgres:5432/postgres
+      SALT: ${LANGFUSE_SALT}
+      ENCRYPTION_KEY: ${LANGFUSE_ENCRYPTION_KEY}
+      TELEMETRY_ENABLED: "false"
+      CLICKHOUSE_MIGRATION_URL: clickhouse://langfuse-clickhouse:9000
+      CLICKHOUSE_URL: http://langfuse-clickhouse:8123
+      CLICKHOUSE_USER: clickhouse
+      CLICKHOUSE_PASSWORD: ${LANGFUSE_CLICKHOUSE_PASSWORD}
+      CLICKHOUSE_CLUSTER_ENABLED: "false"
+      LANGFUSE_S3_EVENT_UPLOAD_BUCKET: langfuse
+      LANGFUSE_S3_EVENT_UPLOAD_REGION: auto
+      LANGFUSE_S3_EVENT_UPLOAD_ACCESS_KEY_ID: ${LANGFUSE_MINIO_USER}
+      LANGFUSE_S3_EVENT_UPLOAD_SECRET_ACCESS_KEY: ${LANGFUSE_MINIO_PASSWORD}
+      LANGFUSE_S3_EVENT_UPLOAD_ENDPOINT: http://langfuse-minio:9000
+      LANGFUSE_S3_EVENT_UPLOAD_FORCE_PATH_STYLE: "true"
+      LANGFUSE_S3_MEDIA_UPLOAD_BUCKET: langfuse
+      LANGFUSE_S3_MEDIA_UPLOAD_REGION: auto
+      LANGFUSE_S3_MEDIA_UPLOAD_ACCESS_KEY_ID: ${LANGFUSE_MINIO_USER}
+      LANGFUSE_S3_MEDIA_UPLOAD_SECRET_ACCESS_KEY: ${LANGFUSE_MINIO_PASSWORD}
+      LANGFUSE_S3_MEDIA_UPLOAD_ENDPOINT: http://localhost:9090
+      LANGFUSE_S3_MEDIA_UPLOAD_FORCE_PATH_STYLE: "true"
+      REDIS_HOST: langfuse-redis
+      REDIS_PORT: 6379
+      REDIS_AUTH: ${LANGFUSE_REDIS_AUTH}
+      REDIS_TLS_ENABLED: "false"
+
+  langfuse-web:
+    image: docker.io/langfuse/langfuse:3
+    restart: unless-stopped
+    depends_on: *langfuse-depends
+    ports:
+      - "3000:3000"
+    environment:
+      <<: *langfuse-env
+      NEXTAUTH_SECRET: ${LANGFUSE_NEXTAUTH_SECRET}
+      LANGFUSE_INIT_ORG_ID: ${LANGFUSE_INIT_ORG_ID}
+      LANGFUSE_INIT_ORG_NAME: ${LANGFUSE_INIT_ORG_NAME}
+      LANGFUSE_INIT_PROJECT_ID: ${LANGFUSE_INIT_PROJECT_ID}
+      LANGFUSE_INIT_PROJECT_NAME: ${LANGFUSE_INIT_PROJECT_NAME}
+      LANGFUSE_INIT_PROJECT_PUBLIC_KEY: ${LANGFUSE_INIT_PROJECT_PUBLIC_KEY}
+      LANGFUSE_INIT_PROJECT_SECRET_KEY: ${LANGFUSE_INIT_PROJECT_SECRET_KEY}
+      LANGFUSE_INIT_USER_EMAIL: ${LANGFUSE_INIT_USER_EMAIL}
+      LANGFUSE_INIT_USER_NAME: ${LANGFUSE_INIT_USER_NAME}
+      LANGFUSE_INIT_USER_PASSWORD: ${LANGFUSE_INIT_USER_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/public/health || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  langfuse-clickhouse:
+    image: clickhouse/clickhouse-server:24.12
+    restart: unless-stopped
+    user: "101:101"
+    environment:
+      CLICKHOUSE_DB: default
+      CLICKHOUSE_USER: clickhouse
+      CLICKHOUSE_PASSWORD: ${LANGFUSE_CLICKHOUSE_PASSWORD}
+    volumes:
+      - langfuse_clickhouse_data:/var/lib/clickhouse
+      - langfuse_clickhouse_logs:/var/log/clickhouse-server
+    ports:
+      - "127.0.0.1:8123:8123"
+      - "127.0.0.1:9000:9000"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8123/ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  langfuse-minio:
+    image: cgr.dev/chainguard/minio
+    restart: unless-stopped
+    entrypoint: sh
+    command: -c 'mkdir -p /data/langfuse && minio server --address ":9000" --console-address ":9001" /data'
+    environment:
+      MINIO_ROOT_USER: ${LANGFUSE_MINIO_USER}
+      MINIO_ROOT_PASSWORD: ${LANGFUSE_MINIO_PASSWORD}
+    ports:
+      - "9090:9000"
+      - "127.0.0.1:9091:9001"
+    volumes:
+      - langfuse_minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 2s
+      timeout: 5s
+      retries: 10
+
+  langfuse-redis:
+    image: redis:7
+    restart: unless-stopped
+    command: ["redis-server", "--requirepass", "${LANGFUSE_REDIS_AUTH}", "--maxmemory-policy", "noeviction"]
+    volumes:
+      - langfuse_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${LANGFUSE_REDIS_AUTH}", "ping"]
+      interval: 3s
+      timeout: 10s
+      retries: 10
+
+  langfuse-postgres:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${LANGFUSE_POSTGRES_PASSWORD}
+      POSTGRES_DB: postgres
+      TZ: UTC
+      PGTZ: UTC
+    volumes:
+      - langfuse_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  api_artifacts:
+  api_cache:
+  app_postgres_data:
+  mysql_data:
+  langfuse_postgres_data:
+  langfuse_clickhouse_data:
+  langfuse_clickhouse_logs:
+  langfuse_minio_data:
+  langfuse_redis_data:

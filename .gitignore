@@ -1,0 +1,37 @@
+# Secrets — never commit. .env holds a live model-provider API key.
+.env
+.env.*
+!.env.example
+!.env.production.example
+
+# Virtualenv and build artifacts
+.venv/
+*.egg-info/
+build/
+dist/
+
+# Generated local data (rebuild with scripts/build_dummy_sqlite.py)
+.local/
+
+# Generated caches (rebuild with scripts/catalog_cli.py --rebuild)
+.cache/
+
+# Runtime output
+artifacts/
+charts_out/
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Editors and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# macOS zip residue
+__MACOSX/

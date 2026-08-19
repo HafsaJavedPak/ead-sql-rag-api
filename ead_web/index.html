@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EAD Analytics</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ============================ AUTH GATE ============================ -->
+<div id="auth" class="auth">
+  <div class="auth-card">
+    <div class="auth-mark" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="34" height="34"><path fill="currentColor" d="M12 2 3 7v10l9 5 9-5V7l-9-5Zm0 2.3 6.8 3.8-6.8 3.8L5.2 8.1 12 4.3ZM5 9.9l6 3.4v6.4l-6-3.3V9.9Zm8 9.8v-6.4l6-3.4v6.5l-6 3.3Z"/></svg>
+    </div>
+    <h1 id="authTitle">Welcome back</h1>
+    <p class="auth-sub" id="authSub">Sign in to query the Economic Affairs Division dataset.</p>
+
+    <form id="authForm" autocomplete="on">
+      <label class="field" id="nameField" hidden>
+        <span>Display name</span>
+        <input type="text" id="authName" maxlength="120" placeholder="Your name">
+      </label>
+      <label class="field">
+        <span>Email</span>
+        <input type="email" id="authEmail" required placeholder="you@example.com" autocomplete="username">
+      </label>
+      <label class="field">
+        <span>Password</span>
+        <input type="password" id="authPassword" required minlength="1" placeholder="••••••••••••" autocomplete="current-password">
+        <small id="pwHint" hidden>Minimum 12 characters.</small>
+      </label>
+      <div class="auth-error" id="authError" hidden></div>
+      <button class="btn-primary" type="submit" id="authSubmit">Continue</button>
+    </form>
+
+    <p class="auth-switch">
+      <span id="switchText">Don't have an account?</span>
+      <button type="button" id="switchBtn">Sign up</button>
+    </p>
+  </div>
+</div>
+
+<!-- ============================== APP ============================== -->
+<div id="app" class="app" hidden>
+
+  <!-- ---------------------------- SIDEBAR --------------------------- -->
+  <aside class="sidebar" id="sidebar">
+    <div class="side-top">
+      <button class="icon-btn brand" id="brandBtn" title="EAD Analytics">
+        <svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M12 2 3 7v10l9 5 9-5V7l-9-5Zm0 2.3 6.8 3.8-6.8 3.8L5.2 8.1 12 4.3ZM5 9.9l6 3.4v6.4l-6-3.3V9.9Zm8 9.8v-6.4l6-3.4v6.5l-6 3.3Z"/></svg>
+      </button>
+      <div class="side-top-right">
+        <button class="icon-btn" id="searchBtn" title="Search chats">
+          <svg viewBox="0 0 24 24" width="20" height="20"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M11 4a7 7 0 1 0 0 14 7 7 0 0 0 0-14Zm5 12 4 4"/></svg>
+        </button>
+        <button class="icon-btn" id="collapseBtn" title="Collapse sidebar">
+          <svg viewBox="0 0 24 24" width="20" height="20"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M4 5h16v14H4zM10 5v14"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <nav class="side-nav">
+      <button class="nav-item active" id="newChatBtn">
+        <svg viewBox="0 0 24 24" width="19" height="19"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" d="m16.5 3.5 4 4L8 20H4v-4L16.5 3.5Z"/></svg>
+        <span>New chat</span>
+      </button>
+      <button class="nav-item" id="chartsBtn">
+        <svg viewBox="0 0 24 24" width="19" height="19"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" d="M4 20V10m5 10V4m5 16v-7m5 7V8"/></svg>
+        <span>Charts</span>
+      </button>
+      <button class="nav-item" id="archiveBtn">
+        <svg viewBox="0 0 24 24" width="19" height="19"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M3 6h18v4H3zM5 10v9h14v-9M10 14h4"/></svg>
+        <span>Archived</span>
+      </button>
+    </nav>
+
+    <div class="side-search" id="sideSearch" hidden>
+      <input type="search" id="searchInput" placeholder="Search chats…" autocomplete="off">
+    </div>
+
+    <div class="side-scroll">
+      <div class="side-label" id="recentsLabel">Recents</div>
+      <ul class="conv-list" id="convList"></ul>
+      <div class="side-empty" id="convEmpty" hidden>No conversations yet.</div>
+    </div>
+
+    <div class="side-foot">
+      <button class="user-pill" id="userPill">
+        <span class="avatar" id="avatar">?</span>
+        <span class="user-meta">
+          <strong id="userName">…</strong>
+          <small id="userPlan">Signed in</small>
+        </span>
+      </button>
+      <button class="btn-ghost" id="logoutBtn">Log out</button>
+    </div>
+  </aside>
+
+  <!-- ----------------------------- MAIN ----------------------------- -->
+  <main class="main">
+    <header class="topbar">
+      <button class="icon-btn only-collapsed" id="expandBtn" title="Open sidebar">
+        <svg viewBox="0 0 24 24" width="20" height="20"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" d="M4 5h16v14H4zM10 5v14"/></svg>
+      </button>
+      <button class="title-btn" id="titleBtn">
+        <span id="chatTitle">EAD Analytics</span>
+        <svg viewBox="0 0 24 24" width="16" height="16"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="m7 10 5 5 5-5"/></svg>
+      </button>
+      <div class="topbar-right">
+        <span class="model-chip" id="modelChip">…</span>
+        <span class="health-dot" id="healthDot" title="API status"></span>
+      </div>
+    </header>
+
+    <!-- dropdown for the title button -->
+    <div class="menu" id="titleMenu" hidden>
+      <button data-act="rename">Rename chat</button>
+      <button data-act="archive">Archive chat</button>
+      <button data-act="delete" class="danger">Delete chat</button>
+    </div>
+
+    <!-- empty / hero state -->
+    <section class="hero" id="hero">
+      <h2 id="greeting">What's on the agenda today?</h2>
+      <div class="composer-wrap">
+        <div id="composerHost"></div>
+        <div class="suggestions" id="suggestions"></div>
+      </div>
+    </section>
+
+    <!-- conversation transcript -->
+    <section class="thread" id="thread" hidden>
+      <div class="thread-inner" id="threadInner"></div>
+      <div class="composer-dock" id="composerDock"></div>
+    </section>
+  </main>
+</div>
+
+<!-- composer template, moved between hero and dock -->
+<template id="composerTpl">
+  <div class="composer" id="composer">
+    <button class="composer-plus" id="plusBtn" title="Example questions">
+      <svg viewBox="0 0 24 24" width="20" height="20"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M12 5v14M5 12h14"/></svg>
+    </button>
+    <textarea id="input" rows="1" placeholder="Ask anything about the EAD portfolio…"></textarea>
+    <button class="composer-send" id="sendBtn" title="Send" disabled>
+      <svg viewBox="0 0 24 24" width="18" height="18"><path fill="currentColor" d="M12 4 5 11h4v9h6v-9h4l-7-7Z"/></svg>
+    </button>
+    <button class="composer-stop" id="stopBtn" title="Stop generating" hidden>
+      <svg viewBox="0 0 24 24" width="16" height="16"><rect fill="currentColor" x="6" y="6" width="12" height="12" rx="2"/></svg>
+    </button>
+  </div>
+</template>
+
+<div class="menu" id="plusMenu" hidden></div>
+<div class="toast" id="toast" hidden></div>
+
+<script src="app.js"></script>
+</body>
+</html>

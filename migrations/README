@@ -1,0 +1,2 @@
+Application-state migrations for the EAD SQL RAG API. Run with `alembic upgrade head`.
+
