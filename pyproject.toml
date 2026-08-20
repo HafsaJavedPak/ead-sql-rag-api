@@ -26,6 +26,11 @@ dependencies = [
   "orjson>=3.10,<4",
   "pandas>=2.2,<3",
   "plotly>=5.22,<7",
+  # langgraph-checkpoint-postgres depends on bare psycopg>=3.2, which needs
+  # either a system libpq or a compiled extension -- neither is present in
+  # any of this repo's Docker images. [binary] bundles its own, so no apt
+  # package is needed anywhere.
+  "psycopg[binary]>=3.2,<4",
   "pwdlib[argon2]>=0.2,<1",
   "pydantic-settings>=2.7,<3",
   "PyJWT[crypto]>=2.10,<3",
