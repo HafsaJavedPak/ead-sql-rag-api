@@ -6,6 +6,7 @@ from datetime import UTC, datetime, timedelta
 from sqlalchemy import or_, select, update
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import noload
 
 from ead_api.core.config import Settings
 from ead_api.core.security import (
@@ -101,6 +102,12 @@ async def refresh_session(
                 AuthSession.previous_refresh_token_hash == digest,
             )
         )
+        # AuthSession.user is mapped lazy="joined" (models.py), which adds a
+        # LEFT OUTER JOIN to every AuthSession query -- Postgres rejects
+        # combining that with FOR UPDATE ("cannot be applied to the
+        # nullable side of an outer join"). Not needed here anyway: user is
+        # fetched separately below via session.get().
+        .options(noload(AuthSession.user))
         .with_for_update()
     )
     if auth_session is None:
