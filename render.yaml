@@ -1,0 +1,111 @@
+## Render Blueprint for the EAD SQL RAG API on free-tier hosted services.
+##
+## This deploys ONLY the API container. It does not host PostgreSQL, MySQL,
+## or Langfuse -- those are external managed services (see docs/deploy-render.md
+## for the recommended free ones and exact URL formats). Fields marked
+## `sync: false` are secrets/environment-specific values you paste into the
+## Render dashboard after the Blueprint creates the service; they are never
+## committed here.
+##
+## Deploy: Render dashboard -> New -> Blueprint -> point at this repo.
+
+services:
+  - type: web
+    name: ead-sql-rag-api
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile.render
+    dockerContext: .
+    healthCheckPath: /health/live
+    envVars:
+      # --- Core app posture ---
+      # APP_ENV=production forces Settings.validate_production() in
+      # ead_api/core/config.py to require: a real 48+ char JWT secret, no
+      # wildcard CORS/hosts, AUTO_CREATE_SCHEMA=false, DOCS_ENABLED=false,
+      # and LANGFUSE_ENABLED=true. There is no supported way to skip
+      # Langfuse while APP_ENV=production -- that is why this Blueprint
+      # wires it up rather than disabling it.
+      - key: APP_ENV
+        value: production
+      - key: DOCS_ENABLED
+        value: "false"
+      - key: AUTO_CREATE_SCHEMA
+        value: "false"
+      - key: LOG_LEVEL
+        value: INFO
+
+      # Set to your actual Render hostname / frontend origin once known,
+      # e.g. ALLOWED_HOSTS=ead-sql-rag-api.onrender.com and
+      # CORS_ORIGINS=https://your-web-console.example. No wildcards --
+      # the production validator rejects "*".
+      - key: ALLOWED_HOSTS
+        sync: false
+      - key: CORS_ORIGINS
+        sync: false
+
+      # Generate with: openssl rand -base64 64
+      - key: JWT_SECRET_KEY
+        sync: false
+
+      # --- Application PostgreSQL (e.g. Neon) ---
+      # Two different client libraries, two different URL shapes for the SAME
+      # database -- see docs/deploy-render.md for the exact rewrite.
+      #   APP_DATABASE_URL      -> SQLAlchemy asyncpg:  postgresql+asyncpg://...?ssl=require
+      #   LANGGRAPH_DATABASE_URL -> psycopg (langgraph checkpointer): postgresql://...?sslmode=require
+      - key: APP_DATABASE_URL
+        sync: false
+      - key: LANGGRAPH_DATABASE_URL
+        sync: false
+
+      # --- Analytics MySQL: Aiven free tier ---
+      # DB_USER=avnadmin (schema introspection only), DB_READONLY_USER=ead_ro
+      # (the only account that ever executes generated SQL, GRANT SELECT
+      # only) -- see docs/deploy-render.md §2 for creating it. DB_PORT is
+      # Aiven's service-specific port, not the standard 3306. DB_SSL_CA is
+      # the CA certificate's PEM content, required because Aiven enforces
+      # TLS (ead_agent/db.py). Do NOT set ANALYTICS_DATABASE_URL here -- it
+      # overrides both engines with the same credential and collapses the
+      # two-account safety boundary.
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        sync: false
+      - key: DB_NAME
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_READONLY_USER
+        sync: false
+      - key: DB_READONLY_PASSWORD
+        sync: false
+      - key: DB_SSL_CA
+        sync: false
+
+      # --- LLM (Groq is the default provider already) ---
+      - key: LLM_PROVIDER
+        value: groq
+      - key: GROQ_API_KEY
+        sync: false
+
+      # --- Embeddings: lexical avoids loading any model at all ---
+      # Required for this image -- see Dockerfile.render's comment.
+      - key: EMBED_PROVIDER
+        value: lexical
+
+      # --- Langfuse Cloud (free Hobby tier) ---
+      - key: LANGFUSE_ENABLED
+        value: "true"
+      - key: LANGFUSE_PUBLIC_KEY
+        sync: false
+      - key: LANGFUSE_SECRET_KEY
+        sync: false
+      # Use https://us.cloud.langfuse.com instead if your project is in the
+      # US region -- check the URL Langfuse shows you after signup.
+      - key: LANGFUSE_BASE_URL
+        value: https://cloud.langfuse.com
+      - key: LANGFUSE_CAPTURE_CONTENT
+        value: "false"
+      - key: LANGFUSE_TRACING_ENVIRONMENT
+        value: production

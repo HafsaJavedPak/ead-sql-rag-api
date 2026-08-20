@@ -624,18 +624,21 @@ CREATE TABLE `wq_offbudgets` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `cache` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `key` BIGINT NULL,
   `value` VARCHAR(255) NULL,
   `expiration` BIGINT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `cache_locks` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `key` BIGINT NULL,
   `owner` VARCHAR(255) NULL,
   `expiration` BIGINT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `course_to_applicants` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `to_applicantid` BIGINT NULL,
   `course_id` BIGINT NULL,
   `region_id` BIGINT NULL,
@@ -664,6 +667,7 @@ CREATE TABLE `course_to_applicants` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `course_to_countries` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `to_countryid` BIGINT NULL,
   `course_id` BIGINT NULL,
   `country_id` BIGINT NULL,
@@ -674,6 +678,7 @@ CREATE TABLE `course_to_countries` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `course_to_donors` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `to_donorid` BIGINT NULL,
   `course_id` BIGINT NULL,
   `donor_id` BIGINT NULL,
@@ -684,6 +689,7 @@ CREATE TABLE `course_to_donors` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `course_to_executingagencies` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `to_executingagencyid` BIGINT NULL,
   `course_id` BIGINT NULL,
   `executingagency_id` BIGINT NULL,
@@ -694,6 +700,7 @@ CREATE TABLE `course_to_executingagencies` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `course_to_sectors` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `to_sectorid` BIGINT NULL,
   `course_id` BIGINT NULL,
   `sector_id` BIGINT NULL,
@@ -704,6 +711,7 @@ CREATE TABLE `course_to_sectors` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `course_to_sponseragencies` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `to_sponseragenyid` BIGINT NULL,
   `course_id` BIGINT NULL,
   `sponseragency_id` BIGINT NULL,
@@ -787,6 +795,7 @@ CREATE TABLE `jmccountry_to_traders` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `jmcsession_to_agendas` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `to_agendaid` BIGINT NULL,
   `ministry_id` BIGINT NULL,
   `session_id` BIGINT NULL,
@@ -799,6 +808,7 @@ CREATE TABLE `jmcsession_to_agendas` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `jmcsession_to_draftprotocols` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `to_draftprotocolid` BIGINT NULL,
   `session_id` BIGINT NULL,
   `ministry_id` BIGINT NULL,
@@ -825,6 +835,7 @@ CREATE TABLE `jmcsession_to_immfiles` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `jmcsession_to_immrenminders` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `to_immreminderid` BIGINT NULL,
   `to_immid` BIGINT NULL,
   `session_id` BIGINT NULL,
@@ -840,6 +851,7 @@ CREATE TABLE `jmcsession_to_immrenminders` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `jmcsession_to_imms` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `to_immid` BIGINT NULL,
   `session_id` BIGINT NULL,
   `imm_title` VARCHAR(255) NULL,
@@ -868,6 +880,7 @@ CREATE TABLE `jmcsession_to_implementations` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `jmcsession_to_jmccountries` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `to_jmccountryid` BIGINT NULL,
   `session_id` BIGINT NULL,
   `country_id` BIGINT NULL,
@@ -891,6 +904,7 @@ CREATE TABLE `jmcsession_to_proposalfiles` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `jmcsession_to_proposals` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `to_proposalid` BIGINT NULL,
   `session_id` BIGINT NULL,
   `request_id` BIGINT NULL,
@@ -947,6 +961,7 @@ CREATE TABLE `jmcsession_to_requests` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `jmcsession_to_signedprotocols` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `to_signedprotocolid` BIGINT NULL,
   `session_id` BIGINT NULL,
   `protocol_title` VARCHAR(255) NULL,
@@ -1161,6 +1176,7 @@ CREATE TABLE `offbudget_to_sdgs` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `password_reset_tokens` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `email` BIGINT NULL,
   `token` VARCHAR(255) NULL,
   `created_at` VARCHAR(255) NULL
@@ -1181,6 +1197,7 @@ CREATE TABLE `personal_access_tokens` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `piplineprojects_to_approvalforums` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `to_approvalforumid` BIGINT NULL,
   `piplineproject_id` BIGINT NULL,
   `approvalforum_id` BIGINT NULL,
@@ -1204,6 +1221,7 @@ CREATE TABLE `piplineprojects_to_donors` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `piplineprojects_to_regions` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `to_regionid` BIGINT NULL,
   `piplineproject_id` BIGINT NULL,
   `region_id` BIGINT NULL,
@@ -1676,6 +1694,7 @@ CREATE TABLE `project_to_projecttypes` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `project_to_regioncosts` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `to_regioncostid` BIGINT NULL,
   `project_id` BIGINT NULL,
   `region_id` BIGINT NULL,
@@ -1828,6 +1847,7 @@ CREATE TABLE `task_to_attachments` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `task_to_seen` (
+  `id` BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY,
   `task_seenid` BIGINT NULL,
   `task_id` BIGINT NULL,
   `seen_at` VARCHAR(255) NULL,

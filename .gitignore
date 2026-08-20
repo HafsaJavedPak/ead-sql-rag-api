@@ -3,6 +3,14 @@
 .env.*
 !.env.example
 !.env.production.example
+!.env.render.example
+!.env.spaces.example
+
+# Scratch credential dumps (e.g. Aiven service info/CA cert copied locally
+# while preparing a deploy) — never commit these either.
+ca.pem
+keys
+my-keys
 
 # Virtualenv and build artifacts
 .venv/

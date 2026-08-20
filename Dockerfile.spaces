@@ -1,0 +1,38 @@
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1
+
+WORKDIR /app
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY pyproject.toml README.md ./
+COPY ead_agent ./ead_agent
+COPY ead_api ./ead_api
+COPY migrations ./migrations
+COPY alembic.ini ./
+
+# API-only image: no ead_ui, no `[local]` extra (sentence-transformers/torch).
+# Only works with EMBED_PROVIDER=lexical, which never imports an embedding
+# model (see ead_agent/llm.py:get_embeddings). MySQL and PostgreSQL are both
+# external managed services for this deploy target (Aiven MySQL free tier +
+# Neon PostgreSQL) -- see docs/deploy-huggingface-spaces.md.
+RUN pip install --upgrade pip \
+    && pip install .
+
+RUN useradd --create-home --uid 10001 appuser \
+    && mkdir -p /app/artifacts /app/.cache \
+    && chown -R appuser:appuser /app
+
+USER appuser
+
+# Spaces routes to a FIXED port declared as `app_port` in the Space's
+# README.md frontmatter (README.spaces.md ships app_port: 8000) -- unlike
+# Render, there is no injected $PORT to read at runtime.
+EXPOSE 8000
+
+CMD ["sh", "-c", "alembic upgrade head && uvicorn ead_api.main:app --host 0.0.0.0 --port 8000"]

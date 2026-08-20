@@ -71,6 +71,8 @@ single-host deployment, not a high-availability topology.
 - [API contract](docs/api.md)
 - [Production runbook](docs/production.md)
 - [On-prem and local setup](docs/on-prem.md)
+- [Deploying to Render on free-tier services](docs/deploy-render.md)
+- [Deploying to Hugging Face Spaces](docs/deploy-huggingface-spaces.md)
 
 ## Repository layout
 

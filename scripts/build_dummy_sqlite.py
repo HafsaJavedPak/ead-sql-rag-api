@@ -161,6 +161,13 @@ def mysql_schema_sql(tables: list[TableData]) -> str:
     ]
     for table in tables:
         definitions = []
+        # Some tables (mostly *_to_* junctions, plus a few Laravel framework
+        # tables) have no single column that is both present and unique --
+        # _primary_key() correctly declines to name one. Managed MySQL hosts
+        # that enforce sql_require_primary_key (e.g. Aiven) reject a CREATE
+        # TABLE with no primary key at all, so give those a surrogate one.
+        if table.primary_key is None:
+            definitions.append(f"  {_mysql_quote('id')} BIGINT NOT NULL AUTO_INCREMENT PRIMARY KEY")
         for index, (column, data_type) in enumerate(
             zip(table.columns, table.types, strict=True)
         ):

@@ -10,12 +10,13 @@ means a write statement fails at the server.
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from sqlalchemy import create_engine, event, inspect, text
 from sqlalchemy.engine import Engine
 
-from ead_agent.config import settings
+from ead_agent.config import CACHE_DIR, settings
 
 _admin: Engine | None = None
 _readonly: Engine | None = None
@@ -34,6 +35,29 @@ def _analytics_url(user: str, password: str) -> str:
     return settings.analytics_database_url or _url(user, password)
 
 
+_ssl_ca_path: Path | None = None
+
+
+def _ssl_connect_args() -> dict[str, Any]:
+    """PyMySQL SSL args for managed hosts that enforce TLS (e.g. Aiven).
+
+    SQLAlchemy's mysql+pymysql:// URL has no query-string way to pass a CA
+    certificate -- PyMySQL wants it as a connect_args dict instead. Settings
+    carries the certificate as PEM content (an env var), not a path, since
+    that's the one thing every one of this app's deploy targets can pass
+    through; write it to a local file once and hand PyMySQL that path.
+    """
+    if not settings.db_ssl_ca:
+        return {}
+    global _ssl_ca_path
+    if _ssl_ca_path is None:
+        CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        path = CACHE_DIR / "db_ssl_ca.pem"
+        path.write_text(settings.db_ssl_ca)
+        _ssl_ca_path = path
+    return {"ssl": {"ca": str(_ssl_ca_path)}}
+
+
 def _engine(user: str, password: str, *, readonly: bool) -> Engine:
     url = _analytics_url(user, password)
     if url.startswith("sqlite:"):
@@ -45,7 +69,7 @@ def _engine(user: str, password: str, *, readonly: bool) -> Engine:
                 dbapi_connection.execute("PRAGMA query_only = ON")
 
         return engine
-    connect_args: dict[str, Any] = {"connect_timeout": 10}
+    connect_args: dict[str, Any] = {"connect_timeout": 10, **_ssl_connect_args()}
     if readonly:
         connect_args["read_timeout"] = settings.query_timeout_seconds + 5
     return create_engine(url, pool_pre_ping=True, connect_args=connect_args)

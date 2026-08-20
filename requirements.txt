@@ -1,0 +1,53 @@
+# Reference list only -- pyproject.toml is the canonical dependency source
+# (see AGENTS.md and README.md). Nothing in this repo installs from this
+# file: Dockerfile/Dockerfile.render/Dockerfile.spaces all run `pip install
+# .` (or `.[local,ui]`) directly against pyproject.toml. Regenerate by hand
+# if pyproject.toml's [project.dependencies] changes -- there is no script
+# tying the two together.
+
+# --- Core (ead_api + ead_agent), from [project.dependencies] ---
+alembic>=1.14,<2
+asyncpg>=0.30,<1
+email-validator>=2.2,<3
+fastapi>=0.116,<1
+greenlet>=3.1,<4
+httpx>=0.28,<1
+kaleido>=0.2.1,<2
+langchain>=1,<2
+langchain-core>=1,<2
+langchain-groq>=1,<2
+langchain-openai>=1,<2
+langfuse>=4,<5
+langgraph>=1,<2
+langgraph-checkpoint-postgres>=3,<4
+numpy>=1.26,<3
+orjson>=3.10,<4
+pandas>=2.2,<3
+plotly>=5.22,<7
+pwdlib[argon2]>=0.2,<1
+pydantic-settings>=2.7,<3
+PyJWT[crypto]>=2.10,<3
+PyMySQL>=1.1,<2
+python-dotenv>=1,<2
+sqlalchemy>=2.0.36,<3
+sqlglot>=25,<30
+sse-starlette>=3,<4
+uvicorn[standard]>=0.34,<1
+
+# --- Optional: [local] extra -- EMBED_PROVIDER=huggingface only.
+# NOT installed by Dockerfile.render/Dockerfile.spaces, which require
+# EMBED_PROVIDER=lexical instead and never import these. ---
+langchain-huggingface>=1,<2
+sentence-transformers>=5,<6
+
+# --- Optional: [ui] extra -- the Gradio test console (ead_ui). Not part of
+# the API-only Render/Spaces deploy images. ---
+gradio>=5.49,<7
+
+# --- Optional: [dev] extra -- tests, linting, type-checking. Not needed at
+# runtime or in any deploy image. ---
+aiosqlite>=0.20,<1
+mypy>=1.14,<2
+pytest>=8.3,<9
+pytest-asyncio>=0.25,<1
+ruff>=0.9,<1

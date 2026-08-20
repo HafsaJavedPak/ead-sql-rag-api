@@ -52,6 +52,10 @@ class Settings:
     db_readonly_user: str = os.getenv("DB_READONLY_USER", "ead_ro").strip()
     db_readonly_password: str = os.getenv("DB_READONLY_PASSWORD", "")
     analytics_database_url: str = os.getenv("ANALYTICS_DATABASE_URL", "").strip()
+    # PEM certificate content (not a path) for managed hosts that enforce TLS,
+    # e.g. Aiven. Empty disables SSL, for local/Compose MySQL that doesn't
+    # need it.
+    db_ssl_ca: str = os.getenv("DB_SSL_CA", "").strip()
 
     # --- Guard rails ---
     max_retries: int = _int("MAX_RETRIES", 3)
