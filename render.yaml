@@ -34,10 +34,14 @@ services:
       - key: LOG_LEVEL
         value: INFO
 
-      # Set to your actual Render hostname / frontend origin once known,
-      # e.g. ALLOWED_HOSTS=ead-sql-rag-api.onrender.com and
-      # CORS_ORIGINS=https://your-web-console.example. No wildcards --
-      # the production validator rejects "*".
+      # Set to your actual Render hostname / frontend origin once known.
+      # NOTE the different shapes -- easy to trip on:
+      #   ALLOWED_HOSTS: bare hostname, NO scheme.
+      #     e.g. ead-sql-rag-api.onrender.com
+      #   CORS_ORIGINS: full origin, WITH scheme (matches the browser's
+      #     Origin header, which always includes it).
+      #     e.g. https://your-web-console.onrender.com
+      # No wildcards -- the production validator rejects "*".
       - key: ALLOWED_HOSTS
         sync: false
       - key: CORS_ORIGINS

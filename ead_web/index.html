@@ -157,6 +157,12 @@
 <div class="menu" id="plusMenu" hidden></div>
 <div class="toast" id="toast" hidden></div>
 
+<!-- Optional, environment-specific: sets window.EAD_API_BASE before app.js
+     reads it. Absent in local dev (scripts/serve_web.py serves this
+     directory as-is, so this 404s harmlessly and app.js falls back to
+     http://127.0.0.1:8000). Render's Static Site build command generates
+     this file for the deployed console -- see docs/deploy-render.md. -->
+<script src="config.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
