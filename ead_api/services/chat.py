@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import hashlib
+import logging
 import shutil
 import uuid
 from collections.abc import AsyncIterator
@@ -32,6 +33,8 @@ from ead_api.models import (
 from ead_api.schemas import ChatResponse
 from ead_api.services.conversations import owned_conversation
 from ead_api.services.messages import message_response
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -349,6 +352,13 @@ class ChatService:
         except ApiError:
             raise
         except Exception as exc:
+            # Full exception incl. message/traceback goes to server-side
+            # logs only (stdout, visible in the platform's log viewer).
+            # error_detail is a client-facing field (RunResponse via
+            # GET /runs/{id}) -- keep it to the exception class name so a
+            # raw DB error/connection string is never returned to the
+            # authenticated caller, per AGENTS.md.
+            logger.exception("Chat turn %s failed", turn.run_id)
             await self._fail(
                 turn,
                 code="agent_failed",
